@@ -10,9 +10,9 @@ Booleen EchoActif = FAUX;
 #define MSG_DEVELOPPE "## nouvelle specialite \"%s\" ; cout horaire \"%d\"\n" 
 #define MSG_EMBAUCHE "## nouveau travailleur \"%s\" competent pour la specialite \"%s\"\n"
 #define MSG_INTERRUPTION "## fin de programme\n" 
-#define MSG_CHECK_TRAVAILLEURS "la specialite %s peut etre prise en charge par : %s\n"
+#define MSG_CHECK_TRAVAILLEURS "la specialite %s peut etre prise en charge par : "
 #define MSG_NEW_CLIENT "## nouveau client \"%s\"\n"
-#define MSG_CHECK_COMMANDE_CLIENT "le client %s a commande :\n"
+#define MSG_CHECK_COMMANDE_CLIENT "le client %s a commande : \n"
 #define MSG_CHECK_COMMANDE_ALL_CLIENT "## consultation des commandes effectuees par chaque client\n"
 #define MSG_NEW_COMMANDE "## nouvelle commande \"%s\", par client \"%s\"\n"
 #define MSG_CHECK_SUPERVISION "## consultation de l’avancement des commandes\n"
@@ -265,26 +265,34 @@ void affichage_travailleurs(const Travailleurs* all_travailleurs, const Speciali
 	get_id(affichage_nom_specialite);
 	unsigned int i, j;
 	if (strcmp(affichage_nom_specialite, "tous") == 0) {
-		for (i = 0; i < all_travailleurs->nb_travailleurs; ++i) {
-			for (j = 0; j < all_specialites->nb_specialites; ++j) {
-				if (all_travailleurs->tab_travailleurs[i].tags_competences[j] == VRAI) {
-					printf(MSG_CHECK_TRAVAILLEURS, all_specialites->tab_specialites[j].nom, all_travailleurs->tab_travailleurs[i].nom);
+		for (i = 0; i < all_specialites->nb_specialites; i++) {
+			printf(MSG_CHECK_TRAVAILLEURS, all_specialites->tab_specialites[i].nom);
+			for (j = 0; j < all_travailleurs->nb_travailleurs; j++) {
+				if (all_travailleurs->tab_travailleurs[j].tags_competences[i] == VRAI) {
+					printf("%s", all_travailleurs->tab_travailleurs[j].nom);
+				}
+				if (j == all_travailleurs->nb_travailleurs - 1) {
+					printf("\n");
 				}
 			}
 		}
 	}
 	else {
-		for (i = 0; i < all_travailleurs->nb_travailleurs; ++i) {
-			for (j = 0; j < all_specialites->nb_specialites; ++j) {
-				if (strcmp(all_specialites->tab_specialites[j].nom, affichage_nom_specialite) == 0){
-					if (all_travailleurs->tab_travailleurs[i].tags_competences[j] == VRAI) {
-						printf(MSG_CHECK_TRAVAILLEURS, affichage_nom_specialite, all_travailleurs->tab_travailleurs[i].nom);
-						//break;
+		for (i = 0; i < all_specialites->nb_specialites; i++) {
+			if (strcmp(all_specialites->tab_specialites[i].nom, affichage_nom_specialite) == 0) {
+				printf(MSG_CHECK_TRAVAILLEURS, affichage_nom_specialite);
+				for (j = 0; j < all_travailleurs->nb_travailleurs; j++) {
+					if (all_travailleurs->tab_travailleurs[j].tags_competences[i] == VRAI) {
+						printf("%s", all_travailleurs->tab_travailleurs[j].nom);
+					}
+					if (j == all_travailleurs->nb_travailleurs - 1) {
+						printf("\n");
 					}
 				}
 			}
 		}
 	}
+	//printf("\n");
 }
 
 // client ---------------------------
