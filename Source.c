@@ -262,6 +262,8 @@ void affichage_all_specialites(Specialites* all_specialites) {
 // travailleurs ---------------------------
 void affichage_travailleurs(const Travailleurs* all_travailleurs, const Specialites* all_specialites) {
 	Mot affichage_nom_specialite;
+	char a[1000] = { '\0' };
+	char b[1000] = { '\0' };
 	get_id(affichage_nom_specialite);
 	unsigned int i, j;
 	if (strcmp(affichage_nom_specialite, "tous") == 0) {
@@ -269,10 +271,21 @@ void affichage_travailleurs(const Travailleurs* all_travailleurs, const Speciali
 			printf(MSG_CHECK_TRAVAILLEURS, all_specialites->tab_specialites[i].nom);
 			for (j = 0; j < all_travailleurs->nb_travailleurs; j++) {
 				if (all_travailleurs->tab_travailleurs[j].tags_competences[i] == VRAI) {
-					printf("%s", all_travailleurs->tab_travailleurs[j].nom);
+					if (a[0] == '\0') {
+						strcpy(a, all_travailleurs->tab_travailleurs[j].nom);
+						strcpy(b, all_travailleurs->tab_travailleurs[j].nom);
+					}
+					else{
+						strcpy(b, all_travailleurs->tab_travailleurs[j].nom);
+						strcat(b, ", ");
+						strcat(b, a);
+					}
 				}
 				if (j == all_travailleurs->nb_travailleurs - 1) {
+					printf("%s", b);
 					printf("\n");
+					strcpy(a, "");
+					strcpy(b, "");
 				}
 			}
 		}
@@ -283,16 +296,26 @@ void affichage_travailleurs(const Travailleurs* all_travailleurs, const Speciali
 				printf(MSG_CHECK_TRAVAILLEURS, affichage_nom_specialite);
 				for (j = 0; j < all_travailleurs->nb_travailleurs; j++) {
 					if (all_travailleurs->tab_travailleurs[j].tags_competences[i] == VRAI) {
-						printf("%s", all_travailleurs->tab_travailleurs[j].nom);
+						if (a[0] == '\0') {
+							strcpy(a, all_travailleurs->tab_travailleurs[j].nom);
+							strcpy(b, all_travailleurs->tab_travailleurs[j].nom);
+						}
+						else {
+							strcpy(b, all_travailleurs->tab_travailleurs[j].nom);
+							strcat(b, ", ");
+							strcat(b, a);
+						}
 					}
 					if (j == all_travailleurs->nb_travailleurs - 1) {
+						printf("%s", b);
 						printf("\n");
+						strcpy(a, "");
+						strcpy(b, "");
 					}
 				}
 			}
 		}
 	}
-	//printf("\n");
 }
 
 // client ---------------------------
