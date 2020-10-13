@@ -12,10 +12,10 @@ Booleen EchoActif = FAUX;
 #define MSG_INTERRUPTION "## fin de programme\n" 
 #define MSG_CHECK_TRAVAILLEURS "la specialite %s peut etre prise en charge par : "
 #define MSG_NEW_CLIENT "## nouveau client \"%s\"\n"
-#define MSG_CHECK_COMMANDE_CLIENT "le client %s a commande : \n"
+#define MSG_CHECK_COMMANDE_CLIENT "le client %s a commande : "
 #define MSG_CHECK_COMMANDE_ALL_CLIENT "## consultation des commandes effectuees par chaque client\n"
 #define MSG_NEW_COMMANDE "## nouvelle commande \"%s\", par client \"%s\"\n"
-#define MSG_CHECK_SUPERVISION "## consultation de l’avancement des commandes\n"
+#define MSG_CHECK_SUPERVISION "etat des taches pour %s : "
 #define MSG_NEW_TACHE "## la commande \"%s\" requiere la specialite \"%s\" (nombre d’heures \"%d\")\n"
 #define MSG_CHECK_CHARGE "## consultation de la charge de travail de \"%s\"\n"
 #define MSG_AVANCEE_PROGRESSION "## pour la commande \"%s\", pour la specialite \"%s\" : \"%d\" heures de plus ont ete realisees\n"
@@ -39,7 +39,7 @@ typedef  struct {
 
 typedef  struct {
 	Specialite tab_specialites[MAX_SPECIALITES];
-	unsigned  int  nb_specialites;
+	unsigned int nb_specialites;
 
 } Specialites;
 
@@ -64,6 +64,25 @@ typedef struct {
 	unsigned int nb_clients;
 }Clients;
 
+
+// commandes−−−−−−−−−−−−−−−−−−−−−−−
+#define MAX_COMMANDES 500
+
+typedef  struct {
+	unsigned  int  nb_heures_requises;
+	unsigned  int  nb_heures_effectuees;
+} Tache;
+
+typedef  struct {
+	Mot nom;
+	unsigned  int  idx_client;
+	Tache  taches_par_specialite[MAX_SPECIALITES];  //  nb_heures_requises==0 <=> pas  de  tache  pour  cette  specialite
+} Commande;
+
+typedef  struct {
+	Commande tab_commandes[MAX_COMMANDES];
+	unsigned  int  nb_commandes;
+} Commandes;
 
 
 // ----------------------------- UTILITAIRE --------------------------------------
@@ -131,7 +150,7 @@ void traite_developpe(Specialites* all_specialites) {
 	specialite_to_register.cout_horaire = cout_horaire;
 
 	if (all_specialites->nb_specialites > MAX_SPECIALITES) {
-		printf("Impossible, +%d specialites\n", MAX_SPECIALITES);
+		//printf("Impossible, +%d specialites\n", MAX_SPECIALITES);
 		return;
 	}
 
@@ -146,9 +165,14 @@ void traite_embauche(const Specialites* all_specialites, Travailleurs* all_trava
 	unsigned int i;
 	get_id(nom_employe);
 	get_id(embauche_nom_specialite);
-	//printf(MSG_EMBAUCHE, nom_employe, embauche_nom_specialite);
-
 	Travailleur travailleur_to_register;
+
+
+	if (all_travailleurs->nb_travailleurs > MAX_TRAVAILLEURS) {
+		//printf("Impossible, +%d specialites\n", MAX_TRAVAILLEURS);
+		return;
+	}
+
 	strcpy(travailleur_to_register.nom, nom_employe);
 	for (i = 0; i < all_specialites->nb_specialites; i++) {
 		if (strcmp(embauche_nom_specialite, all_specialites->tab_specialites[i].nom) == 0) {
@@ -157,10 +181,6 @@ void traite_embauche(const Specialites* all_specialites, Travailleurs* all_trava
 		}
 	}
 
-	if (all_travailleurs->nb_travailleurs > MAX_TRAVAILLEURS) {
-		printf("Impossible, +%d specialites\n", MAX_TRAVAILLEURS);
-		return;
-	}
 
 	all_travailleurs->tab_travailleurs[all_travailleurs->nb_travailleurs] = travailleur_to_register;
 	all_travailleurs->nb_travailleurs += 1;
@@ -172,7 +192,7 @@ void traite_new_client(Clients* all_clients) {
 	get_id(nom_client);
 
 	if (all_clients->nb_clients > MAX_CLIENTS) {
-		printf("Impossible, +%d clients\n", MAX_CLIENTS);
+		//printf("Impossible, +%d clients\n", MAX_CLIENTS);
 		return;
 	}
 
@@ -181,27 +201,60 @@ void traite_new_client(Clients* all_clients) {
 }
 
 // commande ---------------------------
-void traite_new_commande() {
+void traite_new_commande(Commandes* all_commandes, const Clients* all_clients, const Specialites* all_specialites) {
 	Mot nom_commande, commande_nom_client;
+	Commande commande_to_register;
+	unsigned int i, j;
 	get_id(nom_commande);
 	get_id(commande_nom_client);
-	printf(MSG_NEW_COMMANDE, nom_commande, commande_nom_client);
+
+	if (all_commandes->nb_commandes > MAX_COMMANDES) {
+		return;
+	}
+
+	strcpy(commande_to_register.nom, nom_commande);
+	for (i = 0; i < all_clients->nb_clients; i++) {
+		if (strcmp(commande_nom_client, all_clients->table_clients[i]) == 0) {
+			commande_to_register.idx_client = i;
+			break;
+		}
+	}
+
+	for (j = 0; j < all_specialites->nb_specialites; j++) {
+		commande_to_register.taches_par_specialite[j].nb_heures_requises = 0;
+	}
+
+	all_commandes->tab_commandes[all_commandes->nb_commandes] = commande_to_register;
+	all_commandes->nb_commandes += 1;
 }
 
 // tache ---------------------------
-void traitement_tache() {
+void traitement_tache(Commandes* all_commandes, const Specialites* all_specialites) {
 	Mot tache_nom_commande, tache_nom_specialite;
+	Tache tache_to_register;
+	unsigned int i, j;
 	get_id(tache_nom_commande);
 	get_id(tache_nom_specialite);
-	int tache_temps_needed = get_int();
-	printf(MSG_NEW_TACHE, tache_nom_commande, tache_nom_specialite, tache_temps_needed);
+	tache_to_register.nb_heures_requises = get_int();
+	tache_to_register.nb_heures_effectuees = 0;
+
+	for (i = 0; i < all_commandes->nb_commandes; i++) { 
+		if (strcmp(all_commandes->tab_commandes[i].nom, tache_nom_commande) == 0) { // Si parmi toutes les commandes tache_nom_commande == une commande alors
+			for (j = 0; j < all_specialites->nb_specialites; j++) {
+				if (strcmp(all_specialites->tab_specialites[j].nom, tache_nom_specialite) == 0) { // Si parmi toutes les specialites tache_nom_specialite == une specialite alors
+					all_commandes->tab_commandes[i].taches_par_specialite[j] = tache_to_register; // On met tache_to_register à l'id de la specialite car c'est trié par specialite
+				}
+			}
+		}
+	}
 }
 
 // progression ---------------------------
-void traitement_avancee_progression() {
+void traitement_avancee_progression(Commandes* all_commandes, const Specialites* all_specialites) {
 	Mot progression_nom_commande, progression_nom_specialite, progression_passe_necessaire;
 	int progression_avancement_temps;
-	int i = 0;
+	unsigned int i = 0;
+	unsigned int j;
 	Booleen isPassePresent = FAUX;
 	char progression_string[MAX_STRING_LENGHT];
 
@@ -232,11 +285,23 @@ void traitement_avancee_progression() {
 		++i;
 	}
 
-	printf(MSG_AVANCEE_PROGRESSION, progression_nom_commande, progression_nom_specialite, progression_avancement_temps);
+	for (i = 0; i < all_commandes->nb_commandes; ++i){
+		if (strcmp(all_commandes->tab_commandes[i].nom, progression_nom_commande) == 0) {
+			for (j = 0; j < all_specialites->nb_specialites; ++j) {
+				if (strcmp(all_specialites->tab_specialites[j].nom, progression_nom_specialite) == 0) {
+					all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_effectuees += progression_avancement_temps;
+				}
 
-	if (isPassePresent == VRAI) {
-		printf(MSG_REALLOCATION_NEEDED);
+			}
+			break;
+		}
 	}
+
+	//printf(MSG_AVANCEE_PROGRESSION, progression_nom_commande, progression_nom_specialite, progression_avancement_temps);
+
+	//if (isPassePresent == VRAI) {
+	//	printf(MSG_REALLOCATION_NEEDED);
+	//}
 }
 
 
@@ -319,25 +384,65 @@ void affichage_travailleurs(const Travailleurs* all_travailleurs, const Speciali
 }
 
 // client ---------------------------
-void affichage_clients(const Clients* all_clients) {
+void affichage_clients(const Clients* all_clients, const Commandes* all_commandes) {
 	Mot affichage_nom_client;
 	get_id(affichage_nom_client);
-	unsigned int i;
+	unsigned int i, j, compteur_commandes;
+
 	for (i = 0; i < all_clients->nb_clients; i++) {
+		compteur_commandes = 0;
 		if (strcmp(affichage_nom_client, "tous") == 0) {
 			printf(MSG_CHECK_COMMANDE_CLIENT, all_clients->table_clients[i]);
+			for (j = 0; j < all_commandes->nb_commandes; j++) {
+				if (all_commandes->tab_commandes[j].idx_client == i) {
+					if (compteur_commandes != 0) {
+						printf(", ");
+					}
+					printf("%s", all_commandes->tab_commandes[j].nom);
+					++compteur_commandes;
+
+				}
+			}
+			printf("\n");
 		}
 		else {
 			if (strcmp(affichage_nom_client, all_clients->table_clients[i]) == 0) {
 				printf(MSG_CHECK_COMMANDE_CLIENT, all_clients->table_clients[i]);
+				for (j = 0; j < all_commandes->nb_commandes; j++) {
+					if (all_commandes->tab_commandes[j].idx_client == i) {
+						if (compteur_commandes != 0) {
+							printf(", ");
+						}
+						printf("%s", all_commandes->tab_commandes[j].nom);
+						++compteur_commandes;
+					}
+				}
+				printf("\n");
+				break;
 			}
 		}
 	}
 }
 
 // supervision ---------------------------
-void affichage_supervision() {
-	printf(MSG_CHECK_SUPERVISION);
+void affichage_supervision(const Commandes* all_commandes, const Specialites* all_specialites) {
+	unsigned int i, j, compteur_commandes;
+	for (i = 0; i < all_commandes->nb_commandes; i++) {
+		compteur_commandes = 0;
+		printf(MSG_CHECK_SUPERVISION, all_commandes->tab_commandes[i].nom);
+		for (j = 0; j < all_specialites->nb_specialites; j++) {
+			//printf("%d", all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_requises);
+			if (all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_requises != 0) {
+				if (compteur_commandes != 0) {
+					printf(", ");
+				}
+				printf("%s:%d/%d", all_specialites->tab_specialites[j].nom, all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_effectuees, all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_requises);
+				++compteur_commandes;
+			}
+		}
+		printf("\n");
+	}
+	//printf(MSG_CHECK_SUPERVISION);
 }
 
 // charge ---------------------------
@@ -356,9 +461,10 @@ void traite_interruption() {
 
 // ------------------------------------ MAIN/Boucle principale -----------------------------------------
 int main(int argc, char* argv[]) {
-	Specialites toutes_les_specialites = { "", 0 };
+	Specialites toutes_les_specialites = { "", 0 }; // 0 -> nb Specialites/Travailleurs/Clients... au départ
 	Travailleurs tous_les_travailleurs = { "", 0 };
 	Clients tous_les_clients = { "", 0 };
+	Commandes toutes_les_commandes = { "", 0 };
 	if (argc >= 2 && strcmp("echo", argv[1]) == 0) {
 		EchoActif = VRAI;
 	}
@@ -380,15 +486,15 @@ int main(int argc, char* argv[]) {
 			continue;
 		}			
 		if (strcmp(buffer, "commande") == 0) {
-			traite_new_commande();
+			traite_new_commande(&toutes_les_commandes, &tous_les_clients, &toutes_les_specialites);
 			continue;
 		}			
 		if (strcmp(buffer, "tache") == 0) {
-			traitement_tache();
+			traitement_tache(&toutes_les_commandes, &toutes_les_specialites);
 			continue;
 		}			
 		if (strcmp(buffer, "progression") == 0) {
-			traitement_avancee_progression();
+			traitement_avancee_progression(&toutes_les_commandes, &toutes_les_specialites);
 			continue;
 		}	
 
@@ -401,7 +507,7 @@ int main(int argc, char* argv[]) {
 			continue;
 		}	
 		if (strcmp(buffer, "client") == 0) {
-			affichage_clients(&tous_les_clients);
+			affichage_clients(&tous_les_clients, &toutes_les_commandes);
 			continue;
 		}			
 		if (strcmp(buffer, "travailleurs") == 0) {
@@ -413,7 +519,7 @@ int main(int argc, char* argv[]) {
 			continue;
 		}		
 		if (strcmp(buffer, "supervision") == 0) {
-			affichage_supervision();
+			affichage_supervision(&toutes_les_commandes, &toutes_les_specialites);
 			continue;
 		}
 
