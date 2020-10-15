@@ -210,10 +210,17 @@ void traite_embauche(const Specialites* all_specialites, Travailleurs* all_trava
 void traite_new_client(Clients* all_clients) {
 	Mot nom_client;
 	get_id(nom_client);
+	unsigned int i;
 
 	if (all_clients->nb_clients > MAX_CLIENTS) {
 		//printf("Impossible, +%d clients\n", MAX_CLIENTS);
 		return;
+	}
+	for (i = 0; i < all_clients->nb_clients; i++) {
+		if (strcmp(nom_client, all_clients->table_clients[i]) == 0) {
+			//printf("Impossible, le nom de client %s existe deja\n", nom_client);
+			return;
+		}
 	}
 
 	strcpy(all_clients->table_clients[all_clients->nb_clients], nom_client);
