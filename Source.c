@@ -7,21 +7,12 @@ typedef enum { FAUX = 0, VRAI = 1 } Booleen;
 Booleen EchoActif = FAUX;
 
 // Messages emis par les instructions -----------------------------------------
-#define MSG_DEVELOPPE "## nouvelle specialite \"%s\" ; cout horaire \"%d\"\n" 
-#define MSG_EMBAUCHE "## nouveau travailleur \"%s\" competent pour la specialite \"%s\"\n"
-#define MSG_INTERRUPTION "## fin de programme\n" 
+#define MSG_FACTURATION_INTERRUPTION "facturations : " 
 #define MSG_CHECK_TRAVAILLEURS "la specialite %s peut etre prise en charge par : "
-#define MSG_NEW_CLIENT "## nouveau client \"%s\"\n"
 #define MSG_CHECK_COMMANDE_CLIENT "le client %s a commande : "
-#define MSG_CHECK_COMMANDE_ALL_CLIENT "## consultation des commandes effectuees par chaque client\n"
-#define MSG_NEW_COMMANDE "## nouvelle commande \"%s\", par client \"%s\"\n"
 #define MSG_CHECK_SUPERVISION "etat des taches pour %s : "
-#define MSG_NEW_TACHE "## la commande \"%s\" requiere la specialite \"%s\" (nombre d’heures \"%d\")\n"
 #define MSG_CHECK_CHARGE "charge de travail pour %s : "
-#define MSG_AVANCEE_PROGRESSION "## pour la commande \"%s\", pour la specialite \"%s\" : \"%d\" heures de plus ont ete realisees\n"
-#define MSG_REALLOCARTION_NEEDED "## une reallocation est requise\n"
-#define MSG_CHECK_ALL_SPECIALITES "## consultation des specialites\n"
-#define MSG_REALLOCATION_NEEDED "## une reallocation est requise\n"
+#define MSG_FACTURATION "facturation %s : "
 
 // Lexemes -------------------------------------------------------------------- 
 #define LGMOT 35
@@ -87,20 +78,11 @@ typedef  struct {
 } Commandes;
 
 
-// ----------------------------- UTILITAIRE --------------------------------------
+// ----------------------------- Prototypes --------------------------------------
+void affichage_facturation(unsigned int i, const Commandes* all_commandes, const Specialites* all_specialites);
 
-Booleen check_table(char* tableau_a_check[], Mot string_a_check) {
-	unsigned int i;
-	int table_size = sizeof(tableau_a_check);
-	Booleen response = VRAI;
-	for (i = 0; i > table_size; i++) {
-		if (strcmp(tableau_a_check[i], string_a_check) == 0) {
-			response = FAUX;
-			break;
-		}
-	}
-	return response;
-}
+
+// ----------------------------- UTILITAIRE --------------------------------------
 
 void get_id(Mot id) {
 	scanf("%s", id);
@@ -119,8 +101,7 @@ int get_int() {
 	return atoi(buffer);
 }
 
-Booleen lire(char* chaine, int longueur)
-{
+Booleen lire(char* chaine, int longueur){
 	char* positionEntree = NULL;
 
 	// On lit le texte saisi au clavier
@@ -133,8 +114,7 @@ Booleen lire(char* chaine, int longueur)
 		}
 		return VRAI;
 	}
-	else
-	{
+	else {
 		return FAUX;
 	}
 }
@@ -250,6 +230,7 @@ void traite_new_commande(Commandes* all_commandes, const Clients* all_clients, c
 
 	for (j = 0; j < all_specialites->nb_specialites; j++) {
 		commande_to_register.taches_par_specialite[j].nb_heures_requises = 0;
+		commande_to_register.taches_par_specialite[j].nb_heures_effectuees = 0;
 	}
 
 	all_commandes->tab_commandes[all_commandes->nb_commandes] = commande_to_register;
@@ -273,6 +254,7 @@ void traitement_tache(Commandes* all_commandes, const Specialites* all_specialit
 			for (jPremièrePartie = 0; jPremièrePartie < all_specialites->nb_specialites; jPremièrePartie++) {
 				if (strcmp(all_specialites->tab_specialites[jPremièrePartie].nom, tache_nom_specialite) == 0) { // Si parmi toutes les specialites tache_nom_specialite == une specialite alors
 					all_commandes->tab_commandes[iPremièrePartie].taches_par_specialite[jPremièrePartie] = tache_to_register; // On met tache_to_register à l'id de la specialite car c'est trié par specialite
+					//printf("bon pour: %s\n", all_commandes->tab_commandes[iPremièrePartie].nom);
 					peutOnContinuer = VRAI;
 					break;
 				}
@@ -308,8 +290,25 @@ void traitement_tache(Commandes* all_commandes, const Specialites* all_specialit
 
 }
 
+void check_if_facturation_is_needed(unsigned int i, const Commandes* all_commandes, const Specialites* all_specialites) {
+
+	unsigned int j;
+	for (j = 0; j < all_specialites->nb_specialites; j++) {
+		//printf("nb heures effectues: %d", all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_effectuees);
+		//printf("nb heures requises: %d", all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_requises);
+		if (all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_effectuees != all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_requises) {
+			//printf("nop\n");
+			return;
+		}
+	}
+
+	affichage_facturation(i, all_commandes, all_specialites);
+
+}
+
+
 // progression ---------------------------
-void traitement_avancee_progression(Commandes* all_commandes, const Specialites* all_specialites) {
+void traitement_avancee_progression(Commandes* all_commandes, const Specialites* all_specialites, Travailleurs* all_travailleurs) {
 	Mot progression_nom_commande, progression_nom_specialite, progression_passe_necessaire;
 	int progression_avancement_temps;
 	unsigned int i = 0;
@@ -349,6 +348,11 @@ void traitement_avancee_progression(Commandes* all_commandes, const Specialites*
 			for (j = 0; j < all_specialites->nb_specialites; j++) {
 				if (strcmp(all_specialites->tab_specialites[j].nom, progression_nom_specialite) == 0) {
 					all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_effectuees += progression_avancement_temps;
+					all_travailleurs->tab_travailleurs[all_commandes->tab_commandes[i].taches_par_specialite[j].idx_travailleur].nb_heures_a_effectuer -= progression_avancement_temps;
+					if (all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_effectuees == all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_requises) {
+						check_if_facturation_is_needed(i, all_commandes, all_specialites);
+					}
+					break;
 				}
 
 			}
@@ -359,13 +363,33 @@ void traitement_avancee_progression(Commandes* all_commandes, const Specialites*
 	//printf(MSG_AVANCEE_PROGRESSION, progression_nom_commande, progression_nom_specialite, progression_avancement_temps);
 
 	//if (isPassePresent == VRAI) {
+		//strcmp
 	//	printf(MSG_REALLOCATION_NEEDED);
 	//}
 }
 
 
-
 // ------------------------- AFFICHAGES -------------------------------------------
+
+// facturation ---------------------------
+void affichage_facturation(unsigned int i, const Commandes* all_commandes, const Specialites* all_specialites) {
+	unsigned int j, compteur_specialites;
+	compteur_specialites = 0;
+	unsigned long prix_total_par_specialite;
+	printf(MSG_FACTURATION, all_commandes->tab_commandes[i].nom);
+	for (j = 0; j < all_specialites->nb_specialites; j++) {
+		if (all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_requises != 0) {
+			prix_total_par_specialite = all_commandes->tab_commandes[i].taches_par_specialite[j].nb_heures_requises * all_specialites->tab_specialites[j].cout_horaire;
+			if (compteur_specialites != 0) {
+				printf(", ");
+			}
+			printf("%s:%lu", all_specialites->tab_specialites[j].nom, prix_total_par_specialite);
+			++compteur_specialites;
+		}
+	}
+	printf("\n");
+}
+
 
 //specialites ---------------------------
 // Affichage de toutes les spécialités 
@@ -533,8 +557,26 @@ void affichage_charge(Commandes* all_commandes, const Specialites* all_specialit
 
 // ------------------------------------ END -----------------------------------------
 // interruption ------------------------ 
-void traite_interruption() {
-	printf(MSG_INTERRUPTION);
+void traite_interruption(const Clients* all_clients, const Commandes* all_commandes, const Specialites* all_specialites) {
+	unsigned int i, j, k;
+	unsigned long total_par_client;
+	printf(MSG_FACTURATION_INTERRUPTION);
+	for (i = 0; i < all_clients->nb_clients; i++) {
+		total_par_client = 0;
+		for (j = 0; j < all_commandes->nb_commandes; j++) {
+			if (all_commandes->tab_commandes[j].idx_client == i) {
+				for (k = 0; k < all_specialites->nb_specialites; k++) {
+					//if (all_commandes->tab_commandes[j].taches_par_specialite[k].nb_heures_requises != 0)
+					total_par_client = total_par_client + (all_commandes->tab_commandes[j].taches_par_specialite[k].nb_heures_requises * all_specialites->tab_specialites[k].cout_horaire);
+				}
+			}
+		}
+		if (i != 0) {
+			printf(", ");
+		}
+		printf("%s:%lu", all_clients->table_clients[i], total_par_client);
+	}
+	printf("\n");
 }
 
 // ------------------------------------ MAIN/Boucle principale -----------------------------------------
@@ -549,8 +591,6 @@ int main(int argc, char* argv[]) {
 	Mot buffer;
 	while (VRAI) {
 		get_id(buffer);
-
-
 		if (strcmp(buffer, "developpe") == 0) {
 			traite_developpe(&toutes_les_specialites);
 			continue;
@@ -572,13 +612,9 @@ int main(int argc, char* argv[]) {
 			continue;
 		}			
 		if (strcmp(buffer, "progression") == 0) {
-			traitement_avancee_progression(&toutes_les_commandes, &toutes_les_specialites);
+			traitement_avancee_progression(&toutes_les_commandes, &toutes_les_specialites, &tous_les_travailleurs);
 			continue;
 		}	
-
-
-
-
 
 		if (strcmp(buffer, "charge") == 0) {
 			affichage_charge(&toutes_les_commandes, &toutes_les_specialites, &tous_les_travailleurs);
@@ -601,12 +637,10 @@ int main(int argc, char* argv[]) {
 			continue;
 		}
 
-
 		if (strcmp(buffer, "interruption") == 0) {
-			traite_interruption();
+			traite_interruption(&tous_les_clients, &toutes_les_commandes, &toutes_les_specialites);
 			break;
 		}
-
 
 		printf("!!! instruction inconnue >%s< !!!\n", buffer);
 	}
