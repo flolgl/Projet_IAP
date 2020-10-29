@@ -33,7 +33,6 @@ typedef  struct {
 typedef  struct {
 	Specialite tab_specialites[MAX_SPECIALITES];
 	unsigned int nb_specialites;
-
 } Specialites;
 
 // travailleurs --------------------------
@@ -70,7 +69,7 @@ typedef  struct {
 typedef  struct {
 	Mot nom;
 	unsigned  int  idx_client;
-	Tache  taches_par_specialite[MAX_SPECIALITES];  //  nb_heures_requises==0 <=> pas  de  tache  pour  cette  specialite
+	Tache  taches_par_specialite[MAX_SPECIALITES];
 	Booleen commande_finie;
 } Commande;
 
@@ -78,7 +77,6 @@ typedef  struct {
 	Commande tab_commandes[MAX_COMMANDES];
 	unsigned  int  nb_commandes;
 } Commandes;
-
 
 // ----------------------------- Prototypes --------------------------------------
 void affichage_facturation(unsigned int i, const Commandes* all_commandes, const Specialites* all_specialites, const Clients* all_clients);
@@ -129,7 +127,7 @@ void traite_interruption();
 
 // ------------------------------------ MAIN/Boucle principale -----------------------------------------
 int main(int argc, char* argv[]) {
-	Specialites toutes_les_specialites; // 0 -> nb Specialites/Travailleurs/Clients... au départ
+	Specialites toutes_les_specialites;
 	Travailleurs tous_les_travailleurs;
 	Clients tous_les_clients;
 	Commandes toutes_les_commandes;
@@ -193,7 +191,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		if (strcmp(buffer, "interruption") == 0) {
-			traite_interruption(&tous_les_clients, &toutes_les_commandes, &toutes_les_specialites);
+			traite_interruption();
 			break;
 		}
 
@@ -402,7 +400,7 @@ void assign_tache_to_travailleur(Travailleurs* all_travailleurs, const Specialit
 	if (j == -1) {printf("err06.1"); return;}
 
 	for (i = 0; i < all_travailleurs->nb_travailleurs; i++) {
-		if (all_travailleurs->tab_travailleurs[i].tags_competences[j] == VRAI) { // Si le travailleur a la compétence
+		if (all_travailleurs->tab_travailleurs[i].tags_competences[j] == VRAI) { 
 			if (nb_heures_min == -1) {
 				nb_heures_min = all_travailleurs->tab_travailleurs[i].nb_heures_a_effectuer;
 				id_travailleur = i;
@@ -419,7 +417,7 @@ void assign_tache_to_travailleur(Travailleurs* all_travailleurs, const Specialit
 	if (nb_heures_min == -1) {printf("err06.2"); return;}
 
 	all_commandes->tab_commandes[index_commande].taches_par_specialite[index_specialite].idx_travailleur = id_travailleur;
-	all_travailleurs->tab_travailleurs[id_travailleur].nb_heures_a_effectuer += nb_heures_requises; //- tache_to_register.nb_heures_effectuees; -> Tjrs égal à 0 quand on enregistre une tache
+	all_travailleurs->tab_travailleurs[id_travailleur].nb_heures_a_effectuer += nb_heures_requises; 
 
 }
 
@@ -428,11 +426,10 @@ void assign_tache_to_travailleur(Travailleurs* all_travailleurs, const Specialit
 void traitement_avancee_progression(Commandes* all_commandes, const Specialites* all_specialites, Travailleurs* all_travailleurs, Clients* all_clients) {
 	Mot progression_nom_commande, progression_nom_specialite, progression_passe_necessaire;
 	int progression_avancement_temps, i, j;
-	unsigned int idx_travailleur; // idx_travailleur necessaire si reallocation
+	unsigned int idx_travailleur; 
 	Booleen isPassePresent = FAUX;
-	char progression_string[MAX_STRING_LENGHT]; // changer
+	char progression_string[MAX_STRING_LENGHT];
 
-	// Etant donné que "passe" est un argument facultatif. On ne peut pas utiliser scanf donc utilisation de fgets pour récupérer toute la ligne -> lire = fgets mais sans le \n
 	lire(progression_string, MAX_STRING_LENGHT);
 
 	progression_traitement_ligne(&progression_string, &progression_nom_commande, &progression_nom_specialite, &progression_avancement_temps, progression_passe_necessaire, &isPassePresent);
@@ -495,7 +492,6 @@ Booleen check_if_commande_est_finie(unsigned int i, Commandes* all_commandes, co
 			return FAUX;
 		}
 	}
-	//affichage_facturation(i, all_commandes, all_specialites);
 	all_commandes->tab_commandes[i].commande_finie = VRAI;
 	return VRAI;
 }
@@ -505,7 +501,7 @@ void traite_reallocation(Commandes* all_commandes, const Specialites* all_specia
 	int nb_heures_min, j,k;
 	
 	nb_heures_min = -1;
-	j = find_specialite(all_specialites, nom_specialite); //A  changer
+	j = find_specialite(all_specialites, nom_specialite); 
 	k = find_commande(all_commandes, nom_commande);
 
 	if (k == -1 || j == -1) {printf("err08.1"); return;}
@@ -515,9 +511,9 @@ void traite_reallocation(Commandes* all_commandes, const Specialites* all_specia
 	all_travailleurs->tab_travailleurs[old_idx_travailleur].nb_heures_a_effectuer -= nb_heures_restantes;
 
 	for (i = 0; i < all_travailleurs->nb_travailleurs; i++) {
-		if (all_travailleurs->tab_travailleurs[i].tags_competences[j] == VRAI) { // Si le travailleur a la compétence
+		if (all_travailleurs->tab_travailleurs[i].tags_competences[j] == VRAI) { 
 			if (nb_heures_min == -1) {
-				nb_heures_min = all_travailleurs->tab_travailleurs[i].nb_heures_a_effectuer; // gérer le fait qu'il faut enlever le nb d'heures du travailleur qui a la tache
+				nb_heures_min = all_travailleurs->tab_travailleurs[i].nb_heures_a_effectuer; 
 				new_idx_travailleur = i;
 			}
 			else {
@@ -579,7 +575,6 @@ void facturation_totale(const Clients* all_clients, const Commandes* all_command
 		for (j = 0; j < all_commandes->nb_commandes; j++) {
 			if (all_commandes->tab_commandes[j].idx_client == i) {
 				for (k = 0; k < all_specialites->nb_specialites; k++) {
-					//if (all_commandes->tab_commandes[j].taches_par_specialite[k].nb_heures_requises != 0)
 					total_par_client = total_par_client + (all_commandes->tab_commandes[j].taches_par_specialite[k].nb_heures_requises * all_specialites->tab_specialites[k].cout_horaire);
 				}
 			}
@@ -776,4 +771,3 @@ void affichage_charge(Commandes* all_commandes, const Specialites* all_specialit
 void traite_interruption() {
 	printf(MSG_INTERRUPTION);
 }
-
