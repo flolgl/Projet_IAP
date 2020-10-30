@@ -79,8 +79,28 @@ typedef  struct {
 } Commandes;
 
 // ----------------------------- Prototypes --------------------------------------
+/**
+	*La fonction "affichage facturation"
+	*Affiche une facturation par spécialité utilisée lorsqu'une commande est terminée.
+
+	@param l'entier i, Commandes, Specialites et Clients
+*/
 void affichage_facturation(unsigned int i, const Commandes* all_commandes, const Specialites* all_specialites, const Clients* all_clients);
+
+/**
+	*La fonction "affichage facturation totale"
+	*Affiche une facturation globale lorsque toutes les commandes sont terminées.
+
+	@param Clients, Commandes et Specialites 
+*/
 void facturation_totale(const Clients* all_clients, const Commandes* all_commandes, const Specialites* all_specialites);
+/**
+	*La fonction "check si facturation totale" de type booleen
+	*Vérifie et Retourne Vrai si toutes les commandes sont terminées et Faux si elles ne sont pas terminées
+
+	@param Commandes
+	@return "Vrai" ou "Faux"
+*/
 Booleen check_si_facturation_totale(const Commandes* all_commandes);
 
 void get_id(Mot id);
@@ -92,37 +112,152 @@ int find_specialite(Specialites* all_specialites, Mot nom_specialite);
 int find_travailleur(Travailleurs* all_travailleurs, Mot nom_travailleur);
 int find_client(Clients* all_clients, Mot nom_client);
 
+/**
+	*La Fonction "developpe"
+	*Déclare une nouvelle spécialité de tâches. Le Mot nom_specialite correspond au nom de la spécialité ; l’entier cout_horaire indique le prix d’une heure de travail pour cette spécialité.
+	Le système traite au maximum 10 spécialités.
+	@param Specialites
+
+*/
 void traite_developpe(Specialites* all_specialites);
 
+/**
+	*La Fonction "embauche"
+	*Déclare un nouveau travailleur. Mot nom_employe correspond à son nom ; Mot embauche_nom_specialite à sa spécialité.
+	  Peut être utilisée pour un travailleur déjà déclaré. Dans ce cas, une nouvelle spécialité est ajoutée pour ce travailleur.
+	Le système traite au maximum 50 travailleurs.
+
+	@warning La spécialité doit avoir été précédement déclarée et Chaque travailleur doit avoir un nom distinct.
+	@param Specialites et Travailleurs
+*/
 void traite_embauche(const Specialites* all_specialites, Travailleurs* all_travailleurs);
 
+/**
+	*La fonction "demarche"
+	*Déclare un client. Mot nom_client correspond a son nom.
+	Le système traite au maximum 100 clients.
+
+	@warning Chaque client doit avoir un nom distinct.
+	@param Clients
+
+*/
 void traite_new_client(Clients* all_clients);
 
+/**
+	*La fonction "commande"
+	*Déclare une nouvelle commande. Mot nom_commande définit la commande. Mot commande_nom_client correspond au nom du client effectuant la commande.
+	Le système traite au maximum 500 commandes.
+
+	@warning  Chaque commande doit avoir un nom distinct
+	@param Commandes, Clients et Specialites
+*/
 void traite_new_commande(Commandes* all_commandes, const Clients* all_clients, const Specialites* all_specialites);
 
+/**
+	*La fonction "tache"
+	*Déclare une tâche nécessaire à la réalisation d’une commande. Mot tache_nom_commande désigne la commande ; Mot tache_nom_specialite désigne la spécialité concernée.
+	L’entier nb_heure indique le nombre d’heures nécessaires pour réaliser la tâche.
+	Chaque commande peut avoir au maximum une tâche par spécialité
 
+	@param Commandes, Specialites et Travailleurs
+*/
 void traitement_tache(Commandes* all_commandes, const Specialites* all_specialites, Travailleurs* all_travailleurs);
 void assign_tache_to_travailleur(Travailleurs* all_travailleurs, const Specialites* all_specialites, Commandes* all_commandes, Mot tache_nom_specialite, unsigned int index_commande, unsigned int index_specialite, unsigned int nb_heures_requises);
 
+/**
+	*La fonction "progression"
+	*Déclare l’avancement d’une tâche. Mot progression_nom_commande désigne la commande ; Mot progression_nom_specialite la spécialité ; l’entier progression_avancement_temps indique le nombre d’heures à ajouter à son avancement
+	Lorsque le Mot progression_passe_necessaire est ajouté, il indique qu’il faut, en plus du comportement ci-dessus, réaffecter la tâche.
+*/
 void traitement_avancee_progression(Commandes* all_commandes, const Specialites* all_specialites, Travailleurs* all_travailleurs, Clients* all_clients);
+
+/**
+	*La fonction "check si commande est finie"
+	*Vérifie et Retourne Vrai si toutes les commandes sont terminées ou Faux si elles ne sont pas terminées
+*/
 Booleen check_if_commande_est_finie(unsigned int i, const Commandes* all_commandes, const Specialites* all_specialites);
+
+
 void traite_reallocation(Commandes* all_commandes, const Specialites* all_specialites, Travailleurs* all_travailleurs, Mot nom_specialite, Mot nom_commande, unsigned int old_idx_travailleur);
 void progression_traitement_ligne(char* progression_string, Mot* progression_nom_commande, Mot* progression_nom_specialite, int* progression_avancement_temps, Mot* progression_passe_necessaire, Booleen* isPassePresent);
 
+/**
+	*La fonction "affichage specialités"
+	*Affiche la liste des spécialités, dans l’ordre de leur déclaration, ainsi que le coût associé.
+	@param Specialites (vérifie la ligne 165 et 670 il n'y'a pas une erreur de Parametre ?)
+*/
 void affichage_all_specialites(Specialites* all_specialites);
 
+/**
+	*La fonction "affichage travailleurs"
+	*Execute et affiche les fonctions "affichage_travailleurs_tous" et "affichage_travailleur_unique" en fonction de la présence du mot clé "tous" ou non.
+
+	@param Specialites
+*/
 void affichage_travailleurs(const Travailleurs* all_travailleurs, const Specialites* all_specialites);
+
+/**
+	*La fonction "affichage travailleurs tous"
+	*Affiche la liste des travailleurs pour toutes les spécialités. Les spécialités sont affichées dans l’ordre de leur déclaration ; pour une même
+	spécialité, les travailleurs sont affichés par ordre de déclaration.
+
+	@param Travailleurs et Specialites
+*/
 void affichage_travailleurs_tous(const Travailleurs* all_travailleurs, const Specialites* all_specialites);
+
+/**
+	*La fonction "affichage travailleurs unique"
+	*Affiche la liste des travailleurs compétents pour la spécialité choisie, par ordre de déclaration des travailleurs.
+
+	@param Travailleurs, Specialites et Mot
+*/
 void affichage_travailleur_unique(const Travailleurs* all_travailleurs, const Specialites* all_specialites, Mot nom_specialite);
 
+/**
+	*La fonction "affichage Clients"
+	*Execute et affiche les fonctions "affichage_clients_tous" et "affichage_client_unique" en fonction de la présence du mot clé "tous" ou non.
+
+	@param Clients et Commande
+*/
 void affichage_clients(const Clients* all_clients, const Commandes* all_commandes);
+
+/**
+	*La fonction "affichage client tous"
+	*Affiche la liste de toutes les commandes, par ordre de déclaration de client, et de commande.
+
+	@param Clients et Commandes
+*/
 void affichage_clients_tous(const Clients* all_clients, const Commandes* all_commandes);
+
+/**
+	*La fonction "affichage client unique"
+	*Affiche la liste des commandes effectuées par le client choisi, selon leur ordre de déclaration
+
+	@param Clients, Commande et Mot
+*/
 void affichage_client_unique(const Clients* all_clients, const Commandes* all_commandes, Mot affichage_nom_client);
 
+/**
+	*La fonction "affichage supervision"
+	*Affiche la description de l’état d’avancement des commandes et des tâches associées, par ordre de commandes, et de spécialité.
+
+	@param Commandes et Specialites
+*/
 void affichage_supervision(const Commandes* all_commandes, const Specialites* all_specialites);
 
+/**
+	*La fonction "affichage charge"
+	*Pour le travailleur choisi, affiche le nombre d’heures restantes pour l’accomplissement de chacune de ses tâches . 
+	Les tâches sont affichées par ordre de commande, et de spécialité.
+
+	@param Commandes, Specialites et Travailleurs
+*/
 void affichage_charge(Commandes* all_commandes, const Specialites* all_specialites, Travailleurs* all_travailleurs);
 
+/**
+	*La fonction "interruption"
+	*Quitte le programme
+*/
 void traite_interruption();
 
 // ------------------------------------ MAIN/Boucle principale -----------------------------------------
